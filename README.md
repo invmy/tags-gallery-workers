@@ -16,11 +16,23 @@
 1. 右上角`Use this template`使用此模板创建自己的仓库
 2. 仓库`Settings`打开来自Action部署的`Pages`
 3. 尝试部署，部署成功部署示例页面
+4. 
+## 部署到Cloudflare Pages
+直接链接部署。
+```
+构建命令: node gallery-generate.js
+构建输出: output/
 
-# 如何部署workers？
+添加一个变量填写你的用户名/仓库
+
+GITHUB_REPOSITORY : user/repo
+```
+
+# 如何部署上传端workers？
 这需要PAT也就是`个人授权密钥` 创建自己的密码。过期时间任意，仓库建议只授权这一个仓库。权限只需要Content内容:写入
 1. 前往https://github.com/settings/personal-access-tokens
 2. 修改workers.js, 前往Cloudflare 部署一个`workers`。
+
 
 # 如何创建新的文件夹
 创建一个目录，封面命名为`cover`需要保留后缀。带文件夹一起上传到`images`目录下
