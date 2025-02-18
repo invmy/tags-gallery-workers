@@ -7,7 +7,7 @@ const GITHUB_USERNAME = "user"; // 例如 "myusername"
 const GITHUB_REPO = "repo";  // 例如 "myrepo"
 const GITHUB_TOKEN = "github_pat"; // 你的 GitHub Personal Access Token
 const GITHUB_BRANCH = "main"; // GitHub 仓库的分支名，默认是 "main"
-const src = "img"; //路径
+const src = "images"; //路径
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/`; // 自动生成的 GitHub API URL
 const DEFAULT_CUSTOM_LINK = `https://cdn.jsdelivr.net/gh/${GITHUB_USERNAME}/${GITHUB_REPO}`; // 自定义链接前缀，可以为空）
 

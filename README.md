@@ -5,7 +5,7 @@
 部署仅仅部署包含图片链接的html网页，部署超快。
 
 使用流程：
-1. workers上传图片到GitHub仓库。
+1. workers会自动获取最新的文件夹。上传图片到GitHub仓库。
 2. github仓库自动运行action 发布到Pages。
 
 
