@@ -145,7 +145,7 @@ function htmlhead(){
                 max-width: 90%;
                 max-height: 90%;
                 transform-origin: center center;
-                transition: transform 0.3s;
+                transition: none;
             }
 
             /* 明亮模式样式 */
@@ -225,7 +225,6 @@ function htmlhead(){
             .cover-image {
                 width: 100%;
                 height: auto;
-                transition: transform 0.3s;
             }
 
             .cover-image:hover {
@@ -267,30 +266,33 @@ function htmlscript(){
     return `
     <script>
         let selectedTags = [];
-        let scale = 1;
-        let translateX = 0;
-        let translateY = 0;
 
         document.addEventListener("DOMContentLoaded", function() {
             lazyLoadImages();
         });
 
+        // 懒加载函数
         function lazyLoadImages() {
             const lazyImages = document.querySelectorAll('.lazy');
             const observer = new IntersectionObserver((entries, observer) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const img = entry.target;
-                        img.src = img.dataset.src;
-                        img.classList.add('lazy-loaded');
-                        observer.unobserve(img);
+                        const dataSrc = img.dataset.src; // 获取 data-src 属性
+
+                        if (dataSrc) {
+                            img.src = dataSrc; // 设置图片的 src 属性
+                            img.classList.add('lazy-loaded');
+                            observer.unobserve(img); // 停止观察该图片，避免重复加载
+                        }
                     }
                 });
             }, { root: null, rootMargin: "0px", threshold: 0.1 });
 
-            lazyImages.forEach(image => observer.observe(image));
+            lazyImages.forEach(image => observer.observe(image)); // 观察所有懒加载图片
         }
 
+        // 打开灯箱
         function openLightbox(event) {
             const lightbox = document.getElementById('lightbox');
             const lightboxImage = document.getElementById('lightbox-image');
@@ -298,63 +300,12 @@ function htmlscript(){
             
             lightboxImage.src = img.src;
             lightbox.style.display = 'flex';
-            resetTransform();
         }
 
+        // 关闭灯箱
         function closeLightbox() {
             document.getElementById('lightbox').style.display = 'none';
         }
-
-        function resetTransform() {
-            scale = 1;
-            translateX = 0;
-            translateY = 0;
-            updateTransform();
-        }
-
-        function updateTransform() {
-            const lightboxImage = document.getElementById('lightbox-image');
-            lightboxImage.style.transform = \`translate(\${translateX}px, \${translateY}px) scale(\${scale})\`;
-        }
-
-
-        // 添加鼠标滚轮事件以缩放图像
-        document.getElementById('lightbox-image').addEventListener('wheel', function(event) {
-            event.preventDefault(); // 防止滚动页面
-            const zoomAmount = event.deltaY < 0 ? 0.1 : -0.1;
-            scale = Math.min(Math.max(.5, scale + zoomAmount), 3); // 限制缩放范围
-            updateTransform();
-        });
-
-        // 添加拖动功能
-        let isDragging = false;
-        let startX, startY;
-
-        const lightbox = document.getElementById('lightbox');
-        lightbox.addEventListener('mousedown', (event) => {
-            isDragging = true;
-            startX = event.clientX - translateX;
-            startY = event.clientY - translateY;
-            lightbox.style.cursor = 'grabbing'; // 更改鼠标样式
-        });
-
-        lightbox.addEventListener('mousemove', (event) => {
-            if (isDragging) {
-                translateX = event.clientX - startX;
-                translateY = event.clientY - startY;
-                updateTransform();
-            }
-        });
-
-        lightbox.addEventListener('mouseup', () => {
-            isDragging = false;
-            lightbox.style.cursor = 'grab'; // 恢复鼠标样式
-        });
-
-        lightbox.addEventListener('mouseleave', () => {
-            isDragging = false;
-            lightbox.style.cursor = 'grab'; // 恢复鼠标样式
-        });
 
         function selectTag(tag, element) {
             const index = selectedTags.indexOf(tag);
