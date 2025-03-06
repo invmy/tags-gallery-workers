@@ -50,3 +50,15 @@ GITHUB_REPOSITORY : user/repo
 # 修改CDN
 默认使用jsdelivr作为cdn
 需要修改或者删除。请修改cdn变量
+
+# 动态页面 纯HTML+JS 不用每次都编译部署
+
+部署gallery.html
+
+修改下方script的配置信息
+
+本站体验
+
+[体验地址](https://invmy.github.io/tags-gallery-workers/gallery)
+
+https://invmy.github.io/tags-gallery-workers/gallery

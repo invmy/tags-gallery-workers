@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery</title>
+    <style>
+            /* 通用样式 */
+            body {
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .category {
+                padding: 5px 10px;
+                border-radius: 5px;
+                text-decoration: none;
+                font-weight: 500;
+                transition: background-color 0.3s, color 0.3s;
+            }
+
+            .tag-cloud {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-bottom: 20px;
+                justify-content: center;
+            }
+
+            .tag-cloud a {
+                padding: 5px 10px;
+                border-radius: 5px;
+                text-decoration: none;
+                font-weight: 500;
+                transition: background-color 0.3s, color 0.3s;
+            }
+
+            .tag-cloud a:hover {
+                opacity: 0.8;
+            }
+
+            .tag-cloud a.selected {
+                color: #ffffff;
+            }
+
+            .gallery {
+                column-gap: 15px; 
+                max-width: 90%;
+                margin: 0 auto;
+            }
+            /* 响应式瀑布流 */
+            @media (min-width: 600px) {
+                .gallery {
+                    column-count: 2; /* 平板设备 2 列 */
+                }
+            }
+
+            @media (min-width: 900px) {
+                .gallery {
+                    column-count: 3; /* 小型电脑 3 列 */
+                }
+            }
+
+            @media (min-width: 1200px) {
+                .gallery {
+                    column-count: 4; /* 大型电脑 4 列 */
+                }
+            }
+            .gallery-item {
+                margin-bottom: 15px; /* 控制项之间的垂直间距 */
+                break-inside: avoid; /* 防止元素拆分到不同列 */
+                position: relative;
+                overflow: hidden;
+                border-radius: 8px;
+                transition: transform 0.3s;
+                cursor: pointer;
+            }
+
+            .gallery-item:hover {
+                transform: scale(1.05);
+            }
+
+            .gallery-item img {
+                width: 100%;
+                height: auto;
+                display: block;
+                border-radius: 8px;
+            }
+
+            /* 灯箱样式 */
+            #lightbox {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.8);
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            }
+
+            #lightbox img {
+                max-width: 90%;
+                max-height: 90%;
+                transform-origin: center center;
+                transition: transform 0.3s;
+            }
+
+            /* 明亮模式样式 */
+            @media (prefers-color-scheme: light) {
+                body {
+                    background-color: #f5f5f5;
+                    color: #333;
+                }
+
+                h1 {
+                    color: #333;
+                }
+
+                .tag-cloud a {
+                    color: #333;
+                    background-color: #e0e0e0;
+                }
+
+                .tag-cloud a.selected {
+                    background-color: #6200ea;
+                    color: #ffffff;
+                }
+
+                .gallery-item {
+                    background-color: #f5f5f5;
+                }
+            }
+
+            /* 暗黑模式样式 */
+            @media (prefers-color-scheme: dark) {
+                body {
+                    background-color: #121212;
+                    color: #ffffff;
+                }
+
+                h1 {
+                    color: #f5f5f5;
+                }
+
+                .tag-cloud a {
+                    color: #b0bec5;
+                    background-color: #333;
+                }
+
+                .tag-cloud a.selected {
+                    background-color: #6200ea;
+                    color: #ffffff;
+                }
+
+                .gallery-item {
+                    background-color: #333;
+                }
+            }
+    </style>
+</head>
+<body>
+    <div id="categories"></div>
+    <br />
+    <div id="tag-cloud" class="tag-cloud"></div>
+
+    <div id="gallery" class="gallery"></div>
+    
+    <div id="lightbox" onclick="closeLightbox()">
+        <img id="lightbox-image" src="" alt="Lightbox Image" draggable="false">
+    </div>
+
+    <script>
+        let selectedTags = [];
+        const repoOwner = "invmy";
+        const repoName = "tags-gallery-workers";
+        const branch = "main";
+        const galleryPath = "images";
+        const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${galleryPath}?ref=${branch}`;
+        const cdnBaseUrl = `https://cdn.jsdelivr.net/gh/${repoOwner}/${repoName}@${branch}/${galleryPath}/`;
+
+        async function fetchGalleryFolders() {
+            try {
+                let response = await fetch(apiUrl);
+                let data = await response.json();
+                let categories = data.filter(item => item.type === "dir").map(folder => folder.name);
+                renderCategories(categories);
+            } catch (error) {
+                console.error("Error fetching gallery folders:", error);
+            }
+        }
+
+        function renderCategories(categories) {
+            const categoriesContainer = document.getElementById("categories");
+            categoriesContainer.innerHTML = categories.map(category => 
+                `<button class='category' onclick='fetchImages("${category}")'>${category}</button>`
+            ).join('');
+        }
+
+        async function fetchImages(category) {
+            let categoryUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${galleryPath}/${category}?ref=${branch}`;
+            try {
+                let response = await fetch(categoryUrl);
+                let data = await response.json();
+                let images = data.filter(item => item.type === "file" && /\.(jpg|jpeg|png|gif|webp|avif)$/i.test(item.name));
+                renderGallery(images, category);
+                updateTagCloud(images);
+            } catch (error) {
+                console.error("Error fetching images:", error);
+            }
+        }
+
+        function renderGallery(images, category) {
+            const galleryContainer = document.getElementById("gallery");
+            galleryContainer.innerHTML = images.map(image => {
+                let tags = image.name.split('-').map(tag => tag.replace(/\.[^/.]+$/, ""));
+                const imageUrl = cdnBaseUrl +category+"/"+image.name;
+                return `<div class='gallery-item' onclick="openLightbox(event)" data-tags='${tags.join(" ")}'>
+                    <img src="${imageUrl}" alt="${image.name}" loading="lazy">
+                </div>`;
+            }).join('');
+            filterImages();
+        }
+
+        function selectTag(tag, element) {
+            const index = selectedTags.indexOf(tag);
+            if (index === -1) {
+                selectedTags.push(tag);
+                element.classList.add('selected');
+            } else {
+                selectedTags.splice(index, 1);
+                element.classList.remove('selected');
+            }
+            filterImages();
+            updateTagCloud();
+        }
+
+        function filterImages() {
+            const galleryItems = document.querySelectorAll('.gallery-item');
+            let hasVisibleImages = false;
+
+            galleryItems.forEach(item => {
+                const itemTags = item.dataset.tags.split(' ');
+                const matches = selectedTags.every(tag => itemTags.includes(tag));
+
+                if (matches) {
+                    item.style.visibility = 'visible';
+                    item.style.position = 'static';
+                    hasVisibleImages = true;
+                } else {
+                    item.style.visibility = 'hidden';
+                    item.style.position = 'absolute';
+                }
+            });
+
+            document.getElementById('gallery').style.display = hasVisibleImages ? 'block' : 'none';
+        }
+
+        function updateTagCloud() {
+            const remainingTags = new Map(); // 使用 Map 来存储标签及其计数
+            const galleryItems = document.querySelectorAll('.gallery-item');
+
+            // 统计每个标签的出现次数
+            galleryItems.forEach(item => {
+                const itemTags = item.dataset.tags.split(' ');
+                if (selectedTags.every(tag => itemTags.includes(tag))) {
+                    itemTags.forEach(tag => {
+                        remainingTags.set(tag, (remainingTags.get(tag) || 0) + 1); // 计数
+                    });
+                }
+            });
+
+            // 对剩余标签按数量排序，并过滤掉数量为 1 的标签
+            const sortedRemainingTags = Array.from(remainingTags)
+                //.filter(([tag, count]) => count > 1) // 过滤掉计数为 1 的标签
+                .sort((a, b) => b[1] - a[1]);
+
+            const tagCloud = document.getElementById('tag-cloud');
+            tagCloud.innerHTML = sortedRemainingTags.map(([tag, count]) =>
+                `<a href="#" onclick="selectTag('${tag}', this)" class="${selectedTags.includes(tag) ? 'selected' : ''}">${tag} (${count})</a>`
+            ).join(' ');
+        }
+
+        function openLightbox(event) {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImage = document.getElementById('lightbox-image');
+            const img = event.currentTarget.querySelector('img');
+            
+            lightboxImage.src = img.src;
+            lightbox.style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
+        // 页面加载后，获取目录和显示类别
+        document.addEventListener('DOMContentLoaded', function () {
+            fetchGalleryFolders();
+        });
+    </script>
+</body>
+</html>
